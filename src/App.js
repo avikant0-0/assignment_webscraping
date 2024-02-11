@@ -5,12 +5,16 @@ import { Button } from "react-bootstrap";
 import Slider from "./components/Slider";
 import "bootstrap/dist/css/bootstrap.min.css";
 function App() {
-  const [mainData, setMainData] = useState();
+  const [mainData, setMainData] = useState(null);
   const handledata = async () => {
     // console.log("HI");
     const tempdata = await axios.get("http://localhost:3000/fetchalldata");
-    setMainData(tempdata.data);
-    console.log(tempdata);
+    if (tempdata.status === 200) {
+      setMainData(tempdata.data);
+      console.log(tempdata);
+    } else {
+      console.log("Error Data 404");
+    }
   };
 
   return (

@@ -1,8 +1,7 @@
 const cheerio = require("cheerio");
-const puppeteer = require("puppeteer");
 const express = require("express");
 const cors = require("cors");
-
+const axios = require("axios");
 const app = express();
 app.use(cors());
 const port = 3000;
@@ -10,33 +9,14 @@ app.listen(port, () => {
   console.log(`listening on port ${port}`);
 });
 app.get("/fetchalldata", async (req, res) => {
+  const codename = ["BANKNIFTY", "CNXIT", "NSE Index", "CNXAUTO", "CNXPHARMA"];
   console.log("Started fetching data");
   try {
-    const browser = await puppeteer.launch();
-    const page = await browser.newPage();
-    await page.goto(
-      "https://economictimes.indiatimes.com/markets/live-coverage"
+    const html = await axios.get(
+      "https://economictimes.indiatimes.com/markets/live-coverage?from=mdr"
     );
-    // Scroll to the bottom of the page
-    await page.evaluate(async () => {
-      await new Promise((resolve) => {
-        let totalHeight = 0;
-        let distance = 100;
 
-        let timer = setInterval(() => {
-          let scrollHeight = document.body.scrollHeight;
-          window.scrollBy(0, distance);
-          totalHeight += distance;
-          if (totalHeight >= scrollHeight) {
-            clearInterval(timer);
-            resolve();
-          }
-        }, 100);
-      });
-    });
-    const html = await page.content();
-
-    let $ = cheerio.load(html);
+    let $ = cheerio.load(html.data);
 
     let array = [];
 
@@ -50,22 +30,13 @@ app.get("/fetchalldata", async (req, res) => {
       let advProgress_lowtxt = $(
         ".listTable.indicesTable  tbody tr  td.adv_dec .low_txt"
       );
-      let imgUrl = $(".listTable.indicesTable  tbody tr  td img");
       let value = $(".listTable.indicesTable  tbody tr  td.w100");
-
-      // console.log("indexName:", $(indexName[i]).text());
-      // console.log("percentageChange:", $(percentChange[j]).text());
-      // console.log("advancedProgress_high:", $(advProgress_hightxt[i]).text());
-      // console.log("advancedProgress_low:", $(advProgress_lowtxt[i]).text());
-      // console.log("imageUrl:", $(imgUrl[i]).attr("src")); //Lazy Loading
-      // console.log("value:", $(value[k]).text()); //Multiple of 3
-      // console.log("change:", $(change[i]).text());
 
       const IndexName = $(indexName[i]).text();
       const PercentageChange = $(percentChange[j]).text();
       const AdvancedProgress_high = $(advProgress_hightxt[i]).text();
       const AdvancedProgress_low = $(advProgress_lowtxt[i]).text();
-      const Imageurl = $(imgUrl[i]).attr("src");
+      const Imageurl = `https://marketcharts.indiatimes.com/sparkline?symbol=${codename[i]}&exchange=NSE&entity=index&width=90&height=40&chartmode=intraday`;
       const Value = $(value[k]).text();
       const Change = $(change[i]).text();
       array.push([
